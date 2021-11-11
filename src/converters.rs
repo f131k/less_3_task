@@ -1,4 +1,3 @@
-
 use crate::token::{Token, TokenList,TokenType};
 use crate::stack::Stack;
 use crate::queue::Queue;
@@ -75,21 +74,22 @@ impl Converter for InfixToRPN {
                         return Err("в выражении пропущен разделитель аргументов функции (запятая), либо пропущена открывающая скобка");
                     }
                 },
-                TokenType::BinaryOperator | TokenType::UnaryOperator => {
+                TokenType::UnaryOperator => {
+                    stack.push(tok);
+                }
+                TokenType::BinaryOperator => {
                     // Если токен — оператор op1, то:
                     //     Пока присутствует на вершине стека токен оператор op2,
                     //       чей приоритет выше или равен приоритету op1,
                     //       и при равенстве приоритетов op1 является левоассоциативным:
                     //         Переложить op2 из стека в выходную очередь;
                     let mut last = stack.peek();
-                    while last != None {
-                        let op1 = Operator::get_operator(&tok);
-                        let op2 = Operator::get_operator(&last.unwrap());
-                        if op1 < op2 {
+                    while last != None &&
+                        Operator::get_operator(&tok) > Operator::get_operator(&last.unwrap()) { // TODO!!!
                             ops.enqueue(Operator::get_operator(&last.unwrap()));
+                            let _ = stack.pop();
                             last = stack.peek();
                         }
-                    }
 
                     // Положить op1 в стек.
                     stack.push(tok);
@@ -142,7 +142,6 @@ impl Converter for InfixToRPN {
             last = stack.peek();
         }
 
-        //Err("todo!")
         Ok((arguments, ops))
     }
 }

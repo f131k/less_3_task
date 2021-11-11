@@ -23,7 +23,7 @@ impl Reader for ConsoleReader {
         // После последнего match сознательно пропускаем ';'
         // т.к. это должно быть выражением для возврата значения из функции
         match stdin.read_line(&mut input) {
-            Ok(_) => Ok(input.trim().to_string()),
+            Ok(_) => Ok(input.trim().replace(" ", "").to_string()),
             Err(_) => Err(String::from("Не удалось прочитать строку")),
         }
     }

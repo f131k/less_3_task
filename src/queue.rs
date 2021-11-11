@@ -11,8 +11,12 @@ impl<T> Queue<T> {
         self.queue.push(item)
     }
 
-    pub fn dequeue(&mut self) -> T {
-        self.queue.remove(0)
+    pub fn dequeue(&mut self) -> Option<T> {
+        if !self.queue.is_empty() {
+            Some(self.queue.remove(0))
+        } else {
+            None
+        }
     }
 
     pub fn is_empty(&self) -> bool {

@@ -1,19 +1,30 @@
+//!
+
 use std::cmp::Ordering;
 
 use crate::token::{Token, TokenType};
 use crate::queue::Queue;
+
+
+pub type Number = f32;
+
+pub type Arguments = Queue<Number>;
+pub type Operators = Queue<Operator>;
+
+pub type Expression = (Arguments, Operators);
 
 #[derive(Debug)]
 pub struct BaseOperator<T> {
     name: String,
     priority: u32,
     is_left: bool,
-    apply: fn(T) -> Number,
+    pub apply: fn(T) -> Number,
 }
 
 pub enum Operator {
     Unary(BaseOperator<Number>),
     Binary(BaseOperator<(Number, Number)>),
+    #[allow(dead_code)]
     BinaryFunction(BaseOperator<(Number, Number)>),
     Unknown,
 }
@@ -56,19 +67,19 @@ impl BaseOperator<(Number, Number)> {
 
 impl PartialOrd for Operator {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        let (p_lhs, _) = match self {
+        let (p_lhs, l_lhs) = match self {
             Operator::Unary(op) => (op.priority, op.is_left),
             Operator::Binary(op) => (op.priority, op.is_left),
             _ => return None,
         };
 
-        let (p_rhs, l_rhs) = match other {
+        let (p_rhs, _) = match other {
             Operator::Binary(op) => (op.priority, op.is_left),
             Operator::Unary(op) => (op.priority, op.is_left),
             _ => return None,
         };
 
-        if l_rhs {
+        if l_lhs {
             p_lhs.partial_cmp(&p_rhs)
         } else {
             None
@@ -115,18 +126,4 @@ impl Operator {
             _ => Operator::Unknown,
         }
     }
-}
-
-pub type Number = f32;
-
-pub type Arguments = Queue<Number>;
-pub type Operators = Queue<Operator>;
-
-pub type Expression = (Arguments, Operators);
-
-// Ассоциативность оператора
-#[derive(Clone, Copy, PartialEq)]
-pub enum OperatorAssociation {
-    LeftAssociation,
-    RightAssociatoin,
 }

@@ -23,8 +23,4 @@ impl<T> Stack<T> {
     pub fn peek(&self) -> Option<&T> {
         self.stack.last()
     }
-
-    pub fn size(&self) -> usize {
-        self.stack.len()
-    }
 }
