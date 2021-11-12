@@ -1,65 +1,57 @@
 use std::rc::Rc;
 
 use crate::calculator::Calculator;
-use crate::reader::{Reader, EmptyInput};
-use crate::lexer::{Lexer, EmptyLexer};
-use crate::converters::{Converter, EmptyConverter};
-use crate::writer::{Writer, EmptyOutput};
+use crate::reader::{Reader};
+use crate::lexer::{Lexer};
+use crate::converters::{Converter};
+use crate::writer::{Writer};
 use crate::validator::Validator;
 
 pub struct CalculatorBuilder {
-    input: Rc<dyn Reader>,
-    lexer: Rc<dyn Lexer>,
-    validator: Rc<Validator>,
-    converter: Rc<dyn Converter>,
-    writer: Rc<dyn Writer>,
+    target: Calculator,
 }
 
 impl CalculatorBuilder {
     pub fn new() -> Self {
         Self {
-            input: Rc::new(EmptyInput {}),
-            lexer: Rc::new(EmptyLexer {}),
-            validator: Rc::new(Validator::new()),
-            converter: Rc::new(EmptyConverter {}),
-            writer: Rc::new(EmptyOutput {}),
+            target: Calculator::new()
         }
     }
 
-    pub fn input_stream<'a>(&'a mut self, input: Rc<dyn Reader>) -> &'a mut Self {
-        self.input = input;
+    pub fn input_stream(&mut self, input: Rc<dyn Reader>) -> &mut Self {
+        self.target.input = input;
         self
     }
 
-    pub fn lexer<'a>(&'a mut self, lex: Rc<dyn Lexer>) -> &'a mut Self {
-        self.lexer = lex;
+    pub fn lexer(&mut self, lex: Rc<dyn Lexer>) -> &mut Self {
+        self.target.lexer = lex;
         self
     }
 
-    pub fn validator<'a>(&'a mut self, v: Rc<Validator>) -> &'a mut Self {
-        self.validator = v;
+    pub fn validator(&mut self, v: Rc<Validator>) -> &mut Self {
+        self.target.validator = v;
         self
     }
 
-    pub fn converter<'a>(&'a mut self, conv: Rc<dyn Converter>) -> &'a mut Self {
-        self.converter = conv;
+    pub fn converter(&mut self, conv: Rc<dyn Converter>) -> &mut Self {
+        self.target.converter = conv;
         self
     }
 
     #[allow(dead_code)]
-    pub fn output_stream<'a>(&'a mut self, writer: Rc<dyn Writer>) -> &'a mut Self {
-        self.writer = writer;
+    pub fn output_stream(&mut self, writer: Rc<dyn Writer>) -> &mut Self {
+        self.target.writer = writer;
         self
     }
 
-    pub fn build(&self, hello: &'static str) -> Calculator {
+    pub fn build(&self, hello: &str) -> Calculator {
         Calculator {
-            hello_str: hello,
-            input: self.input.clone(),
-            lexer: self.lexer.clone(),
-            validator: self.validator.clone(),
-            converter: self.converter.clone(),
-            writer: self.writer.clone(),
+            hello_str: hello.to_string(),
+            input: self.target.input.clone(),
+            lexer: self.target.lexer.clone(),
+            validator: self.target.validator.clone(),
+            converter: self.target.converter.clone(),
+            writer: self.target.writer.clone(),
         }
     }
 }

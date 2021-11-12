@@ -18,7 +18,7 @@ impl<T> Queue<T> {
             None
         }
     }
-
+    #[allow(dead_code)]
     pub fn is_empty(&self) -> bool {
         self.queue.is_empty()
     }

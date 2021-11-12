@@ -30,9 +30,9 @@ impl RegexpLexer {
         list.push((TokenType::Function,
                    Regex::new(r"^[a-zA-Z]+").unwrap()));
         list.push((TokenType::BinaryOperator,
-                   Regex::new(r"^([/\*]{1,1})|(<{2,2})|(>{2,2})").unwrap()));
+                   Regex::new(r"^(([/\*\^]{1,1})|(<{2,2})|(>{2,2}))").unwrap()));
         list.push((TokenType::UnaryOperator,
-                   Regex::new(r"^([\+\-\^]{1,1})").unwrap()));
+                   Regex::new(r"^([\+\-]{1,1})").unwrap()));
         list.push((TokenType::NumberFloat,
                    Regex::new(r"^(\d+\.\d+)").unwrap()));
         list.push((TokenType::NumberInt,
@@ -61,6 +61,7 @@ impl Lexer for RegexpLexer {
                 if let Some(captions) = rgx.captures(&target_string) {
                     let value = &captions[0];
                     tokens.push((tok.0, value.to_string()));
+                    println!("{} {}", value, target_string);
                     target_string = target_string.strip_prefix(value).unwrap().to_string();
                     break;
                 }

@@ -1,7 +1,7 @@
 use crate::token::{Token, TokenList,TokenType};
 use crate::stack::Stack;
 use crate::queue::Queue;
-use crate::operator::{Operator, Expression, Number};
+use crate::operator::{Operator, Expression, Lexem};
 
 pub trait Converter {
     fn convert<'a>(&self, input: TokenList) -> Result<Expression, &str>;
@@ -17,33 +17,12 @@ impl Converter for EmptyConverter {
 
 pub struct InfixToRPN;
 
-impl InfixToRPN {
-    // pub fn new() -> Self {
-    //     InfixToRPN {
-    //         out_queue: Queue::new(),
-    //         tmp_stack: Stack::new(),
-    //     }
-    // }
-
-    // Определяем, нужно ли выталкивать из стека имеющийся там оператор
-    // fn need_op_pop_from_stack(&self, op1: &str, op2: &str) -> bool {
-    //     let (op1_prio, op1_associo) = get_op_info(op1).unwrap();
-    //     let (op2_prio, _) = get_op_info(op2).unwrap();
-    //     // Если приоритет op2 выше или равен приоритету op1 и при этом op1 является левоассоциативным
-    //     if op2_prio < op1_prio ||
-    //         (op2_prio == op1_prio && op1_associo == OperatorAssociation::LeftAssociation) {
-    //             return true;
-    //         }
-
-    //     false
-    // }
-}
-
 impl Converter for InfixToRPN {
-    fn convert<'a>(&self, input: TokenList) -> Result<Expression, &str> {
-        let mut arguments: Queue<Number> = Queue::new();
+    fn convert(&self, input: TokenList) -> Result<Expression, &str> {
+        // let mut arguments: Queue<Number> = Queue::new();
         let mut stack: Stack<Token> = Stack::new();
-        let mut ops : Queue<Operator> = Queue::new();
+        // let mut ops : Queue<Operator> = Queue::new();
+        let mut output: Expression = Queue::new();
 
         for tok in input {
             println!("{:?} = {}", tok.0, tok.1);
@@ -51,8 +30,9 @@ impl Converter for InfixToRPN {
             match tok.0 {
                 TokenType::NumberInt | TokenType::NumberFloat => {
                     // Если токен — число, то добавить его в очередь вывода
-                    let v = tok.1.parse::<Number>().unwrap();
-                    arguments.enqueue(v);
+                    // let v = tok.1.parse::<Number>().unwrap();
+                    // arguments.enqueue(v);
+                    output.enqueue(Lexem::new(&tok));
                 },
                 TokenType::Function => {
                     // Если токен — функция, то поместить его в стек
@@ -64,8 +44,8 @@ impl Converter for InfixToRPN {
                     //         Переложить оператор из стека в выходную очередь.
                     while !stack.is_empty() && stack.peek().unwrap().0 != TokenType::OpenedParenthesis {
                         let op = stack.pop().unwrap();
-                        // output.enqueue(op);
-                        ops.enqueue(Operator::get_operator(&op));
+                        output.enqueue(Lexem::new(&op));
+                        // ops.enqueue(Operator::get_operator(&op));
                     }
                     // Если стек закончился до того, как был встречен токен открывающая скобка,
                     //   то в выражении пропущен разделитель аргументов функции (запятая),
@@ -83,13 +63,16 @@ impl Converter for InfixToRPN {
                     //       чей приоритет выше или равен приоритету op1,
                     //       и при равенстве приоритетов op1 является левоассоциативным:
                     //         Переложить op2 из стека в выходную очередь;
-                    let mut last = stack.peek();
-                    while last != None &&
-                        Operator::get_operator(&tok) > Operator::get_operator(&last.unwrap()) { // TODO!!!
-                            ops.enqueue(Operator::get_operator(&last.unwrap()));
+                    while let Some(last) = stack.peek() {
+                        if Operator::get_operator(&tok) >= Operator::get_operator(&last) {
+                            println!("Перекладываем оператор в очередь");
+                            output.enqueue(Lexem::new(&last));
+                            // ops.enqueue(Operator::get_operator(&last));
                             let _ = stack.pop();
-                            last = stack.peek();
+                        } else {
+                            break;
                         }
+                    }
 
                     // Положить op1 в стек.
                     stack.push(tok);
@@ -105,7 +88,8 @@ impl Converter for InfixToRPN {
                     while !stack.is_empty() && stack.peek().unwrap().0 != TokenType::OpenedParenthesis {
                         let op = stack.pop().unwrap();
                         // output.enqueue(op);
-                        ops.enqueue(Operator::get_operator(&op));
+                        output.enqueue(Lexem::new(&op));
+                        // ops.enqueue(Operator::get_operator(&op));
                     }
 
                     // Если стек закончился до того, как был встречен токен открывающая скобка, то в выражении пропущена скобка.
@@ -118,7 +102,8 @@ impl Converter for InfixToRPN {
                         if !stack.is_empty() && stack.peek().unwrap().0 == TokenType::Function {
                             let op = stack.pop().unwrap();
                             // output.enqueue(op);
-                            ops.enqueue(Operator::get_operator(&op));
+                            output.enqueue(Lexem::new(&op));
+                            // ops.enqueue(Operator::get_operator(&op));
                         }
                     }
                 },
@@ -128,20 +113,19 @@ impl Converter for InfixToRPN {
 
         // Если больше не осталось токенов на входе:
         // Пока есть токены операторы в стеке:
-        let mut last = stack.peek();
-        while last != None {
-            // Если токен оператор на вершине стека — открывающая скобка, то в выражении пропущена скобка.
-            if last.unwrap().0 == TokenType::OpenedParenthesis {
+        while let Some(last) = stack.peek() {
+            // Если токен опратор на вершине стека — открывающая скобка, то в выражении пропущена скобка.
+            if last.0 == TokenType::OpenedParenthesis {
                 return Err("в выражении пропущена скобка");
             }
 
             // Переложить оператор из стека в выходную очередь.
             let op = stack.pop().unwrap();
             // output.enqueue(op);
-            ops.enqueue(Operator::get_operator(&op));
-            last = stack.peek();
+            output.enqueue(Lexem::new(&op));
+            // ops.enqueue(Operator::get_operator(&op));
         }
 
-        Ok((arguments, ops))
+        Ok(output)
     }
 }
