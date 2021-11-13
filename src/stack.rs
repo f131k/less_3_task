@@ -1,4 +1,3 @@
-
 pub struct Stack<T> {
     pub stack: Vec<T>,
 }

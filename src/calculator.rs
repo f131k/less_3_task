@@ -1,12 +1,12 @@
 use std::rc::Rc;
 
-use crate::reader::{Reader, EmptyInput};
-use crate::lexer::{Lexer, EmptyLexer};
 use crate::converters::{Converter, EmptyConverter};
-use crate::writer::{Writer, ConsoleOutput};
-use crate::validator::Validator;
-use crate::operator::{Expression, Number, Operator, Lexem};
+use crate::lexer::{EmptyLexer, Lexer};
+use crate::operator::{Expression, Lexem, Number, Operator};
+use crate::reader::{EmptyInput, Reader};
 use crate::stack::Stack;
+use crate::validator::Validator;
+use crate::writer::{ConsoleOutput, Writer};
 
 pub struct Calculator {
     pub hello_str: String,
@@ -16,7 +16,6 @@ pub struct Calculator {
     pub converter: Rc<dyn Converter>,
     pub writer: Rc<dyn Writer>,
 }
-
 
 impl Calculator {
     pub fn new() -> Self {
@@ -35,59 +34,65 @@ impl Calculator {
         let mut input_string = match self.input.read() {
             Ok(result) => result,
             Err(why) => {
-                self.writer.print_error(format!("Ошибка получения входной строки: {}", why));
+                self.writer
+                    .print_error(format!("Ошибка получения входной строки: {}", why));
                 return;
-            },
+            }
         };
 
         let tokens = match self.lexer.tokenize(&mut input_string) {
             Ok(result) => result,
             Err(why) => {
-                self.writer.print_error(
-                    format!("Ошибка разбиения на лексемы:\n{0}\n {2:>1$} неизвестная лексема!",
-                            input_string,
-                            input_string.find(why).unwrap(),
-                            "^"));
+                self.writer.print_error(format!(
+                    "Ошибка разбиения на лексемы:\n{0}\n {2:>1$} неизвестная лексема!",
+                    input_string,
+                    input_string.find(why).unwrap(),
+                    "^"
+                ));
                 return;
-            },
+            }
         };
 
         let valid_tokens = match self.validator.validate(tokens) {
             Ok(result) => result,
             Err(why) => {
-                self.writer.print_error(format!("Ошибка валидации: {}", why));
+                self.writer
+                    .print_error(format!("Ошибка валидации: {}", why));
                 return;
-            },
+            }
         };
 
         let mut expr = match self.converter.convert(valid_tokens) {
             Ok(result) => result,
             Err(why) => {
-                self.writer.print_error(format!("Ошибка преобразования: {}", why));
+                self.writer
+                    .print_error(format!("Ошибка преобразования: {}", why));
                 return;
-            },
+            }
         };
 
         let res = match self.calculate(&mut expr) {
             Ok(result) => result,
             Err(why) => {
-                self.writer.print_error(format!("Ошибка вычисления : {}", why));
+                self.writer
+                    .print_error(format!("Ошибка вычисления : {}", why));
                 return;
-            },
+            }
         };
 
-        self.writer.print_success(format!("\nРезультат выражения: {}", res));
+        self.writer
+            .print_success(format!("\nРезультат выражения: {}", res));
     }
 
     pub fn calculate(&self, input: &mut Expression) -> Result<Number, &str> {
-        let mut arguments_stack : Stack<Number> = Stack::new();
+        let mut arguments_stack: Stack<Number> = Stack::new();
 
         while let Some(lexem) = input.dequeue() {
             match lexem {
                 Lexem::NumberLex(v) => {
                     print!("{} ", v);
                     arguments_stack.push(v);
-                },
+                }
 
                 Lexem::OperatorLex(op) => {
                     match op {
@@ -100,7 +105,7 @@ impl Calculator {
                             }
 
                             return Err("error ");
-                        },
+                        }
                         Operator::Binary(op) => {
                             print!("{} ", op.name);
                             if let Some(arg) = arguments_stack.pop() {
@@ -112,10 +117,10 @@ impl Calculator {
                             }
 
                             return Err("error ");
-                        },
+                        }
                         _ => continue,
                     };
-                },
+                }
             };
         }
 
@@ -124,9 +129,45 @@ impl Calculator {
                 return Err("Очередь аргументов не пуста, но очередь операторов опустела");
             }
 
-            return Ok(result)
+            return Ok(result);
         }
 
         Err("Не удалось вычислить выражение")
     }
+}
+
+#[cfg(test)]
+use crate::queue::Queue;
+use crate::token::{TokenType, Token};
+
+#[test]
+fn test_calculate_simple() {
+    let mut expr: Queue<Lexem> = Queue::new();
+    expr.enqueue(Lexem::NumberLex(1.0));
+    expr.enqueue(Lexem::NumberLex(1.0));
+
+    let op : Token = (TokenType::BinaryOperator, "+".to_string());
+    expr.enqueue(Lexem::OperatorLex(Operator::get_operator(&op)));
+
+    let clc: Calculator = Calculator::new();
+    assert_eq!(clc.calculate(&mut expr), Ok(2.0));
+}
+
+#[test]
+fn test_calculate_two_plus_two_mult_two() {
+    // проверка приоритетов операторов через решение 2+2*2 => 2 2 2 * +
+    let mut expr: Queue<Lexem> = Queue::new();
+    expr.enqueue(Lexem::NumberLex(2.0));
+    expr.enqueue(Lexem::NumberLex(2.0));
+    expr.enqueue(Lexem::NumberLex(2.0));
+
+    let op1 : Token = (TokenType::BinaryOperator, "*".to_string());
+    expr.enqueue(Lexem::OperatorLex(Operator::get_operator(&op1)));
+
+    let op2 : Token = (TokenType::BinaryOperator, "+".to_string());
+    expr.enqueue(Lexem::OperatorLex(Operator::get_operator(&op2)));
+
+    let clc: Calculator = Calculator::new();
+    assert_eq!(clc.calculate(&mut expr), Ok(6.0));
+
 }

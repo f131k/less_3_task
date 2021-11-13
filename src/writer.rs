@@ -1,6 +1,6 @@
 extern crate termion;
+use termion::color::Color;
 use termion::{color, style};
-use termion::color::{Color};
 
 pub trait Writer {
     fn write(&self, output: &[u8]) -> Result<usize, &str>;
@@ -30,24 +30,15 @@ impl Writer for ConsoleOutput<'_> {
         Ok(0)
     }
 
-    fn print_error(&self, s: String){
-        println!("{}{}{}",
-                 color::Fg(self.error_color),
-                 s,
-                 style::Reset);
+    fn print_error(&self, s: String) {
+        println!("{}{}{}", color::Fg(self.error_color), s, style::Reset);
     }
 
     fn print_warninig(&self, s: String) {
-        println!("{}{}{}",
-                 color::Fg(self.warning_color),
-                 s,
-                 style::Reset);
+        println!("{}{}{}", color::Fg(self.warning_color), s, style::Reset);
     }
 
     fn print_success(&self, s: String) {
-        println!("{}{}{}",
-                 color::Fg(self.success_color),
-                 s,
-                 style::Reset);
+        println!("{}{}{}", color::Fg(self.success_color), s, style::Reset);
     }
 }

@@ -1,29 +1,30 @@
 use std::io;
 use std::rc::Rc;
 
-mod operator;
-mod token;
-mod reader;
-mod lexer;
-mod converters;
-mod writer;
 mod builder;
 mod calculator;
-mod validator;
-mod stack;
+mod converters;
+mod lexer;
+mod operator;
 mod queue;
+mod reader;
+mod stack;
+mod token;
+mod validator;
+mod writer;
 
 use crate::builder::CalculatorBuilder;
-use crate::reader::{ConsoleReader};
-use crate::lexer::{RegexpLexer};
-use crate::converters::{InfixToRPN};
+use crate::converters::InfixToRPN;
+use crate::lexer::RegexpLexer;
+use crate::reader::ConsoleReader;
+use crate::token::{Token, TokenList, TokenType};
 use crate::validator::Validator;
-use crate::token::{Token, TokenType, TokenList};
 
 pub type Rule = fn(&TokenList) -> bool;
 
 fn print_help() {
-    println!(r#"Данная программа преобразует арифметическую операцию записанную в инфиксной форме в запись обратной польской нотации и вычисляет её.
+    println!(
+        r#"Данная программа преобразует арифметическую операцию записанную в инфиксной форме в запись обратной польской нотации и вычисляет её.
 Поддерживаемые операции:
   унарные:
     '+'
@@ -33,38 +34,42 @@ fn print_help() {
     '-'
     '/'
     '*'
-Для выхода нажмите <Ctrl+C>"#);
+Для выхода нажмите <Ctrl+C>"#
+    );
 }
 
 fn request_to_continue() -> bool {
     let mut answer = String::new();
     println!("Продолжить (Д/н)");
-    io::stdin().read_line(&mut answer).expect("Не удалось прочитать строку");
+    io::stdin()
+        .read_line(&mut answer)
+        .expect("Не удалось прочитать строку");
     match answer.trim() {
-        "y" | "Y" | "Д" | "д" => {return true},
-        "n" | "N" | "Н" | "н" => {return false},
+        "y" | "Y" | "Д" | "д" => return true,
+        "n" | "N" | "Н" | "н" => return false,
         _ => {
             println!("Некорректный ввод. Закрываемся..");
-        },
+        }
     }
 
     false
 }
 
 fn check_for_binary_operator(list: &mut TokenList) -> bool {
-    let mut ind : usize = 0;
-    let list_size : usize = list.len();
+    let mut ind: usize = 0;
+    let list_size: usize = list.len();
 
     while ind < list_size {
-        let tok : &Token  = list.get(ind).unwrap();
+        let tok: &Token = list.get(ind).unwrap();
         if tok.0 == TokenType::UnaryOperator {
             if ind > 0 {
-                let prev : &Token = list.get(ind - 1).unwrap();
-                if prev.0 == TokenType::NumberInt ||
-                    prev.0 == TokenType::NumberFloat ||
-                    prev.0 == TokenType::ClosedParenthesis {
-                        list.get_mut(ind).unwrap().0 =  TokenType::BinaryOperator;
-                    }
+                let prev: &Token = list.get(ind - 1).unwrap();
+                if prev.0 == TokenType::NumberInt
+                    || prev.0 == TokenType::NumberFloat
+                    || prev.0 == TokenType::ClosedParenthesis
+                {
+                    list.get_mut(ind).unwrap().0 = TokenType::BinaryOperator;
+                }
             }
         }
         ind += 1;
@@ -74,16 +79,16 @@ fn check_for_binary_operator(list: &mut TokenList) -> bool {
 }
 
 fn check_for_repeate_binary_operator(list: &mut TokenList) -> bool {
-    let mut ind : usize = 0;
-    let list_size : usize = list.len();
+    let mut ind: usize = 0;
+    let list_size: usize = list.len();
 
     while ind < list_size {
-        let tok : &Token  = list.get(ind).unwrap();
+        let tok: &Token = list.get(ind).unwrap();
         if tok.0 == TokenType::BinaryOperator {
             if ind > 0 {
-                let prev : &Token = list.get(ind - 1).unwrap();
+                let prev: &Token = list.get(ind - 1).unwrap();
                 if prev.0 == TokenType::BinaryOperator {
-                    return false
+                    return false;
                 }
             }
         }
@@ -97,7 +102,8 @@ fn main() {
     print_help();
 
     let mut validator = Validator::new();
-    validator.add_rule(check_for_binary_operator)
+    validator
+        .add_rule(check_for_binary_operator)
         .add_rule(check_for_repeate_binary_operator);
 
     let mut calc = CalculatorBuilder::new()

@@ -1,11 +1,11 @@
 use std::rc::Rc;
 
 use crate::calculator::Calculator;
-use crate::reader::{Reader};
-use crate::lexer::{Lexer};
-use crate::converters::{Converter};
-use crate::writer::{Writer};
+use crate::converters::Converter;
+use crate::lexer::Lexer;
+use crate::reader::Reader;
 use crate::validator::Validator;
+use crate::writer::Writer;
 
 pub struct CalculatorBuilder {
     target: Calculator,
@@ -14,7 +14,7 @@ pub struct CalculatorBuilder {
 impl CalculatorBuilder {
     pub fn new() -> Self {
         Self {
-            target: Calculator::new()
+            target: Calculator::new(),
         }
     }
 
