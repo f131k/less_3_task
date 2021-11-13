@@ -1,10 +1,14 @@
 use std::io;
 use std::io::Write;
 
+///
+/// Типаж для определения объектов получающих входную строку
+///
 pub trait Reader {
     fn read(&self) -> Result<String, String>;
 }
 
+// Объект заглушка
 pub struct EmptyInput {}
 impl Reader for EmptyInput {
     fn read(&self) -> Result<String, String> {
@@ -12,9 +16,14 @@ impl Reader for EmptyInput {
     }
 }
 
+// Объект получающий строку из стандартного потока ввода
 pub struct ConsoleReader;
 
+// Реализация типажа Readed
 impl Reader for ConsoleReader {
+    ///
+    /// Чтение строки из стандартного потока ввода
+    ///
     fn read(&self) -> Result<String, String> {
         let stdin = io::stdin();
         let mut input = String::new();

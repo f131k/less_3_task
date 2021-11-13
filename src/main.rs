@@ -22,6 +22,9 @@ use crate::validator::Validator;
 
 pub type Rule = fn(&TokenList) -> bool;
 
+///
+/// Вывод приветственного сообщения на стандартный вывод
+///
 fn print_help() {
     println!(
         r#"Данная программа преобразует арифметическую операцию записанную в инфиксной форме в запись обратной польской нотации и вычисляет её.
@@ -38,6 +41,9 @@ fn print_help() {
     );
 }
 
+///
+/// Запрос, выводимый на стандартный вывод нужно ли продолжать работу
+///
 fn request_to_continue() -> bool {
     let mut answer = String::new();
     println!("Продолжить (Д/н)");
@@ -55,6 +61,14 @@ fn request_to_continue() -> bool {
     false
 }
 
+
+///
+/// Вспомогательные функции передаваемые объекту валидатору для проверки введенных токенов
+/// При первом разборе на токены все операторы сложения и вычитания по-умолчанию считаются
+///  унарными. После успешного разбора на токены проходим по их списку с целью поиска реальных
+///  унарных операторов и заменяем на бинарные где это необходимо.
+/// Бинарность определяется по наличию перед проверяемым токеном закрывающей скобки или числа
+///
 fn check_for_binary_operator(list: &mut TokenList) -> bool {
     let mut ind: usize = 0;
     let list_size: usize = list.len();
@@ -78,6 +92,10 @@ fn check_for_binary_operator(list: &mut TokenList) -> bool {
     true
 }
 
+///
+/// Вспомогательные функции передаваемые объекту валидатору для проверки введенных токенов
+/// Проверка на наличие двух следующих подряд бинарных операторов
+///
 fn check_for_repeate_binary_operator(list: &mut TokenList) -> bool {
     let mut ind: usize = 0;
     let list_size: usize = list.len();
@@ -98,14 +116,21 @@ fn check_for_repeate_binary_operator(list: &mut TokenList) -> bool {
     true
 }
 
+
+///
+/// Точка входа
+///
 fn main() {
     print_help();
 
+    // Создаем объект валидатора и добавляем требуемые правила-проверки
     let mut validator = Validator::new();
     validator
         .add_rule(check_for_binary_operator)
         .add_rule(check_for_repeate_binary_operator);
 
+    // конструируем объект калькулятора, устанавливая необходимые конкретные
+    // имплементации требуемых для вычисления объектов
     let mut calc = CalculatorBuilder::new()
         .input_stream(Rc::new(ConsoleReader {}))
         .lexer(Rc::new(RegexpLexer::new()))
@@ -113,6 +138,7 @@ fn main() {
         .converter(Rc::new(InfixToRPN {}))
         .build("");
 
+    // основной цикл
     loop {
         calc.run();
 

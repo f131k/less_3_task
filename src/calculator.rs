@@ -8,6 +8,9 @@ use crate::stack::Stack;
 use crate::validator::Validator;
 use crate::writer::{ConsoleOutput, Writer};
 
+///
+/// Объект калькулятора содержащий необходимые для работы объекты
+///
 pub struct Calculator {
     pub hello_str: String,
     pub input: Rc<dyn Reader>,
@@ -17,7 +20,9 @@ pub struct Calculator {
     pub writer: Rc<dyn Writer>,
 }
 
+/// Реализация методов объекта калькулятора
 impl Calculator {
+    /// Создание нового объекта
     pub fn new() -> Self {
         Calculator {
             hello_str: String::from(""),
@@ -29,8 +34,11 @@ impl Calculator {
         }
     }
 
+    /// Выполнение процедуры вычислений
     pub fn run(&mut self) {
         println!("{}", self.hello_str);
+
+        // Получение входной строки
         let mut input_string = match self.input.read() {
             Ok(result) => result,
             Err(why) => {
@@ -40,6 +48,7 @@ impl Calculator {
             }
         };
 
+        // Разбор на токены (лексемы)
         let tokens = match self.lexer.tokenize(&mut input_string) {
             Ok(result) => result,
             Err(why) => {
@@ -53,6 +62,7 @@ impl Calculator {
             }
         };
 
+        // Валидация по установленным правилам
         let valid_tokens = match self.validator.validate(tokens) {
             Ok(result) => result,
             Err(why) => {
@@ -62,6 +72,7 @@ impl Calculator {
             }
         };
 
+        // Преобразование входной последовательности токенов
         let mut expr = match self.converter.convert(valid_tokens) {
             Ok(result) => result,
             Err(why) => {
@@ -71,6 +82,7 @@ impl Calculator {
             }
         };
 
+        // Вычисление выражения по преобразованной последовательности
         let res = match self.calculate(&mut expr) {
             Ok(result) => result,
             Err(why) => {
@@ -80,10 +92,15 @@ impl Calculator {
             }
         };
 
+        // Вывод результата
         self.writer
             .print_success(format!("\nРезультат выражения: {}", res));
     }
 
+    ///
+    /// Вычисление выражения для обратной польской нотации
+    /// Использует стандартный алгоритм с использованием стека
+    ///
     pub fn calculate(&self, input: &mut Expression) -> Result<Number, &str> {
         let mut arguments_stack: Stack<Number> = Stack::new();
 
@@ -136,6 +153,7 @@ impl Calculator {
     }
 }
 
+// базовые тесты
 #[cfg(test)]
 use crate::queue::Queue;
 use crate::token::{TokenType, Token};

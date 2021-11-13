@@ -1,20 +1,31 @@
-//!
-
 use std::cmp::Ordering;
 
 use crate::queue::Queue;
 use crate::token::{Token, TokenType};
 
+// Определим псевдонимы типов для наглядности и удобства
 pub type Number = f32;
 
+
+///
+/// Перечисление типов использующихся в выражениях
+///   - числа
+///   - операторы (функции также считаются операторами)
+///
 #[derive(Debug)]
 pub enum Lexem {
     NumberLex(Number),
     OperatorLex(Operator),
 }
+
+// Псевдоним типа для краткости записи
 pub type Expression = Queue<Lexem>;
 
+// Реализация методов для перечисления Lexem
 impl Lexem {
+    ///
+    /// Создание нового элемента перечисления
+    ///
     pub fn new(tok: &Token) -> Self {
         match tok.0 {
             TokenType::NumberInt | TokenType::NumberFloat => {
@@ -28,23 +39,30 @@ impl Lexem {
     }
 }
 
+///
+/// Базовый объект для представления операторов
+///
 #[derive(Debug)]
 pub struct BaseOperator<T> {
-    pub name: String,
-    priority: u32,
-    is_left: bool,
-    pub apply: fn(T) -> Number,
+    pub name: String,                  // наименование оператора. используется при печати выходного выражения
+    priority: u32,                     // приоритет оператора
+    is_left: bool,                     // является ли оператор левоассоциативным
+    pub apply: fn(T) -> Number,        // функция которую выполняет данный оператор
 }
 
+///
+/// Перечисление известных типов операторов
+///
 #[derive(Debug)]
 pub enum Operator {
-    Unary(BaseOperator<Number>),
-    Binary(BaseOperator<(Number, Number)>),
+    Unary(BaseOperator<Number>),                          // унарные
+    Binary(BaseOperator<(Number, Number)>),               // бинарные
     #[allow(dead_code)]
-    BinaryFunction(BaseOperator<(Number, Number)>),
-    Unknown,
+    BinaryFunction(BaseOperator<(Number, Number)>),       // бинарные функции
+    Unknown,                                              // Ошибочный (неизвестный) оператор
 }
 
+// Специализация функций создания нового оператора для двух обобщенных типов
 impl BaseOperator<Number> {
     fn new(n: String, p: u32, l: bool, f: fn(Number) -> Number) -> Operator {
         Operator::Unary(BaseOperator::<Number> {
@@ -67,6 +85,7 @@ impl BaseOperator<(Number, Number)> {
     }
 }
 
+// Имплементация необходимых типажей (PartialOrd, PartialEq) для возможности сравнения операторов
 impl PartialOrd for Operator {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         let (p_lhs, _) = match self {
@@ -107,6 +126,8 @@ impl PartialEq for Operator {
     }
 }
 
+// реализация методов объекта операторов
+// для добавления новых операторов следует добавлять их здесь
 impl Operator {
     pub fn get_operator(tok: &Token) -> Operator {
         match tok.1.as_ref() {

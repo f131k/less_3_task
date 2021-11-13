@@ -3,23 +3,34 @@ use regex::Regex;
 
 use crate::token::{TokenList, TokenType};
 
+///
+/// Типаж для определения объектов реализующих разбиение строки на токены
+///
 pub trait Lexer {
     fn tokenize(&self, input: &str) -> Result<TokenList, char>;
 }
 
+// Объект заглушка
 pub struct EmptyLexer {}
 
+// Пустая реализация для объекта заглушки
 impl Lexer for EmptyLexer {
     fn tokenize(&self, _: &str) -> Result<TokenList, char> {
         Err(' ')
     }
 }
 
+///
+/// Объект токенизатор на основе регулярных выражений
+///
 pub struct RegexpLexer {
     knows_tokens: Vec<(TokenType, Regex)>,
 }
 
+// Реализация методов для токенизатора на основе регулярных выражений
 impl RegexpLexer {
+    ///
+    /// Создает новый объект со списком известных токенов и соответствующих им регулярных выражений
     pub fn new() -> Self {
         let mut list: Vec<(TokenType, Regex)> = Vec::new();
         list.push((TokenType::OpenedParenthesis, Regex::new(r"^(\()").unwrap()));
@@ -45,7 +56,13 @@ impl RegexpLexer {
     }
 }
 
+// Реализация типажа токенизатора
 impl Lexer for RegexpLexer {
+    ///
+    /// Выполняет преобразование строки в список токенов
+    /// В случае успеха возвращает список токенов
+    /// В случае неудачи первый символ, который не соответствует ни одному известному токену
+    ///
     fn tokenize(&self, input: &str) -> Result<TokenList, char> {
         let mut tokens: TokenList = Vec::new();
         let mut target_string: String = input.to_string();
@@ -63,10 +80,14 @@ impl Lexer for RegexpLexer {
                 }
             }
 
+            // если после сопоставления всех известных шаблонов длина строки не изменилась,
+            //  то считаем произошла ошибка при разборе
             error = strlen_before == target_string.len();
         }
 
         if error {
+            // в случае ошибки возвращаем первый символ оставщейся строки, т.к. именно на нем
+            //   разбор завершился
             return Err(target_string.chars().next().unwrap());
         }
 
@@ -74,6 +95,7 @@ impl Lexer for RegexpLexer {
     }
 }
 
+// Базовые тесты
 #[cfg(test)]
 use std::collections::HashMap;
 

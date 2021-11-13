@@ -3,21 +3,42 @@ use crate::queue::Queue;
 use crate::stack::Stack;
 use crate::token::{Token, TokenList, TokenType};
 
+
+///
+/// Типаж для определения преобразователя
+/// Принимает на вход список токенов
+/// В качестве результата выдает либо очередь чисел и операторов для вычисления,
+///  либо строку с описанием возникшей ошибки
+///
 pub trait Converter {
     fn convert(&self, input: TokenList) -> Result<Expression, &str>;
 }
 
+///
+/// Пустой преобразователь.
+/// Используется для создания пустого калькулятора
+///
 pub struct EmptyConverter {}
 
+// Пустая реализация для пустого преобразователя
 impl Converter for EmptyConverter {
     fn convert(&self, _: TokenList) -> Result<Expression, &str> {
         Err("Empty")
     }
 }
 
+///
+/// Объект для преобразования входной последовательности токенов в очередь
+///   соответствующей обратной польской нотации
+///
 pub struct InfixToRPN;
 
+// Реализация типажа преобразования для объекта InfixToRPN
 impl Converter for InfixToRPN {
+    ///
+    /// Фукнция преобразования из инфиксной записи в префиксную
+    /// Используется алгоритм сортировочной станции Э. Дейкстра
+    ///
     fn convert(&self, input: TokenList) -> Result<Expression, &str> {
         let mut stack: Stack<Token> = Stack::new();
         let mut output: Expression = Queue::new();
@@ -122,6 +143,8 @@ impl Converter for InfixToRPN {
     }
 }
 
+
+// Базовые тесты
 #[cfg(test)]
 #[test]
 fn test_convert() {

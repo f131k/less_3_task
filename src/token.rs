@@ -1,5 +1,3 @@
-// pub struct Token {}
-
 // Типы доступных токенов (лексем)
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub enum TokenType {
@@ -14,7 +12,8 @@ pub enum TokenType {
     Whitespaces,
 }
 
-// Определим кортеж для удобства работы - (Тип токена, "символьное представление")
+// Псевдоним кортежа для удобства работы - (Тип токена, "символьное представление")
 pub type Token = (TokenType, String);
 
+// Псевдоним для краткости записи
 pub type TokenList = Vec<Token>;
